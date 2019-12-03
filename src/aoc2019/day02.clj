@@ -28,3 +28,14 @@
   []
   (first
     (execute (-> mem (assoc 1 12) (assoc 2 2)) 0)))
+
+
+(defn puzzle2
+  []
+  (first (for [verb (range 100)
+               noun (range 100)
+               :let [next-mem (execute (-> mem (assoc 1 noun) (assoc 2 verb)) 0)
+                     result (first next-mem)]
+               :when (= result 19690720)]
+           (+ (* 100 noun)
+              verb) )))
