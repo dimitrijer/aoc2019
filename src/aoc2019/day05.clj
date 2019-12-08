@@ -12,6 +12,10 @@
                    2 4
                    3 2
                    4 2
+                   5 3
+                   6 3
+                   7 4
+                   8 4
                    99 1})
 
 
@@ -19,6 +23,10 @@
                      2 2
                      3 0
                      4 1
+                     5 2
+                     6 2
+                     7 2
+                     8 2
                      99 0})
 
 
@@ -64,28 +72,47 @@
     (map fetch-fn (drop 1 instr) adrmodes)))
 
 
-(defn execute! [mem opcode [arg1 arg2 :as args] dst]
-  (do
-    (println "EXEC " opcode " args " args " dst " dst)
-    (case opcode
-      1 (assoc mem dst (+ arg1 arg2))
-      2 (assoc mem dst (* arg1 arg2))
-      3 (assoc mem dst (Integer/parseInt (read-line)))
-      4 (do (println arg1) mem))))
+(defn execute! [pc mem opcode [arg1 arg2 :as args] dst]
+  (case opcode
+
+    ;; add
+    1 [pc (assoc mem dst (+ arg1 arg2))]
+
+    ;; mul
+    2 [pc (assoc mem dst (* arg1 arg2))]
+
+    ;; in
+    3 [pc (assoc mem dst (Integer/parseInt (read-line)))]
+
+    ;; out
+    4 (do (println arg1) [pc mem])
+
+    ;; jnz
+    5 (if (not (zero? arg1))
+        [arg2 mem]
+        [pc mem])
+
+    ;; jz
+    6 (if (zero? arg1)
+        [arg2 mem]
+        [pc mem])
+
+    ;; lt
+    7 [pc (assoc mem dst (if (< arg1 arg2) 1 0))]
+
+    ;; eq
+    8 [pc (assoc mem dst (if (= arg1 arg2) 1 0))]))
 
 
-(defn run [pc mem]
+(defn run [[pc mem]]
   (let [instr (read-instr pc mem)
         opcode (parse-opcode (first instr))
         ops (fetch-ops instr mem)
-        dst (last instr)]
-    #_(doall (for [i (range (count mem))]
-             (println "[MEM=" i "] = " (nth mem i))))
-    (println "[PC=" pc "] instr = " instr)
+        dst (last instr)
+        pc (+ pc (opcode->size opcode))]
     (if (= (parse-opcode (first instr)) 99)
       mem
-      (recur (+ pc (opcode->size opcode))
-             (execute! mem opcode ops dst)))))
+      (recur (execute! pc mem opcode ops dst)))))
 
 
-(defn puzzle1 [] (run 0 mem))
+(defn puzzle1 [] (run [0 mem]))
